@@ -113,31 +113,29 @@
                     trigger: 'axis',
                     axisPointer: { type: 'cross' }
                 },
-                // --- CUSTOM RIGHT-SIDE BOX LEGEND ---
                 legend: {
                     data: Object.values(labelMapping),
-                    type: 'scroll',            // Keeps long menu list scrollable vertically
-                    orient: 'vertical',        // Formats links in a vertical stack
-                    right: '1%',               // Pins the layout cleanly to the right edge
-                    top: '80px',               // Drops it below the title block
-                    bottom: '80px',            // Prevents it from clipping into the bottom slider bar
-                    padding: 15,               // Inside padding layout cushion
-                    backgroundColor: '#fff',   // Clean solid white card backing
-                    borderColor: '#ccc',       // Light grey border line
-                    borderWidth: 1,            // Renders the enclosing box line
-                    borderRadius: 5,           // Smooths out the box container corners
-                    itemGap: 12,               // Vertical gap spacing between individual keys
+                    type: 'scroll',            
+                    orient: 'vertical',        
+                    right: '1%',               
+                    top: '80px',               
+                    bottom: '80px',            
+                    padding: 15,               
+                    backgroundColor: '#fff',   
+                    borderColor: '#ccc',       
+                    borderWidth: 1,            
+                    borderRadius: 5,           
+                    itemGap: 12,               
                     textStyle: { fontSize: 11 },
-                    // Set default startup visibility conditions
                     selected: {
-                        "Canada Total Oil Production": false // Automatically hides this track on startup
+                        "Canada Total Oil Production": false 
                     }
                 },
                 grid: {
                     top: '80px', 
                     left: '4%',
-                    right: '26%', // Shifts chart grid to the left to reserve 26% of space for the right legend box
-                    bottom: '80px',
+                    right: '26%', 
+                    bottom: '95px', // Shifted up slightly to allow room for source text at the very bottom
                     containLabel: true
                 },
                 toolbox: {
@@ -146,7 +144,7 @@
                         restore: {},
                         saveAsImage: {}
                     },
-                    right: '27%' // Moves the menu utilities safely out of the way of the legend box
+                    right: '27%' 
                 },
                 dataZoom: [
                     {
@@ -155,8 +153,8 @@
                         xAxisIndex: 0,        
                         start: startPercent,  
                         end: 100,             
-                        bottom: '15px',
-                        right: '26%', // Matches the chart width grid boundary layout area cleanly
+                        bottom: '30px', // Shifted up from 15px to sit cleanly above the attribution text
+                        right: '26%', 
                         handleSize: '100%'    
                     },
                     {
@@ -164,6 +162,19 @@
                         xAxisIndex: 0,        
                         start: startPercent,  
                         end: 100
+                    }
+                ],
+                // --- INTEGRATED ATTRIBUTION TEXT BOX ---
+                graphic: [
+                    {
+                        type: 'text',
+                        left: '4%',          // Aligns perfectly with the left edge of the chart grid
+                        bottom: '8px',       // Places it at the very bottom edge of the container
+                        style: {
+                            text: 'Source: Canada Energy Regulator',
+                            font: 'italic 11px Arial, sans-serif',
+                            fill: '#888'      // Clean, muted grey colour so it is non-intrusive
+                        }
                     }
                 ],
                 xAxis: {
