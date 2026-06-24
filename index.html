@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canadian Oil Production Dashboard</title>
+    <!-- Include Apache ECharts Library via CDN -->
+    <!-- <script src="https://jsdelivr.net"></script> -->
+    <script src="echarts.min.js"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #fcfcfc;
+        }
+        h2 {
+            text-align: center;
+            color: #333;
+        }
+        /* Container size for the ECharts canvas */
+        #chart-container {
+            width: 100%;
+            height: 650px;
+            margin-top: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Canadian Oil Production (Barrels)</h2>
+    
+    <!-- The chart container element -->
+    <div id="chart-container"></div>
+
+    <script>
+    // Initialize the ECharts instance on our container div
+    const chartDom = document.getElementById('chart-container');
+    const myChart = echarts.init(chartDom);
+
+    // Dictionary matching JSON raw keys to your descriptive display names
+    const labelMapping = {
+        "nl light": "Newfoundland Light Oil",
+        "nl heavy": "Newfoundland Heavy Oil",
+        "on": "Ontario",
+        "nb": "New Brunswick",
+        "mb": "Manitoba",
+        "nwt": "North West Territories",
+        "sk light": "Saskatchewan Light Oil",
+        "sk heavy": "Saskatchewan Heavy Oil",
+        "ab conv light": "Alberta Conventional Light Oil",
+        "ab conv heavy": "Alberta Conventional Heavy Oil",
+        "ab upgraded": "Alberta Upgraded (Synthetic) Oil",
+        "ab non-upgraded": "Alberta Non-upgraded Oil",
+        "bc light": "BC Light Oil",
+        "bc cond": "BC Condensate",
+        "ab cond": "Alberta Condensate",
+        "ns cond": "Nova Scotia Condensate",
+        "sk cond": "Saskatchewan Condensate",
+        "canada total": "Canada Total Oil Production",
+        "raw mined bitumen": "Raw Mined Bitumen",
+        "raw in situ bitumen": "Raw In Situ Bitumen"
+    };
+
+    // Form an indexed array of the keys for loop sequencing
+    const energyFields = Object.keys(labelMapping);
+
+    // Variables to manually simulate and capture double-click events on the legend
+    let lastClickTime = 0;
+    let lastClickedName = '';
+
+    // Fetch your local data.json file
+    fetch('data.json')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error("HTTP error! Status: " + response.status);
+            }
+            return response.json();
+        })
+        .then(jsonData => {
+            
+            const xDates = jsonData.map(item => item.month);
+
+            // Construct the time series lines using the descriptive map names
+            const seriesData = energyFields.map(field => {
+                return {
+                    name: labelMapping[field], 
+                    type: 'line',
+                    symbol: 'none',            
+                    smooth: true,              
+                    data: jsonData.map(item => item[field])
+                };
+            });
+
+            // Calculate percentage start position to show only the final 5 years (60 months)
+            const totalMonths = jsonData.length;
+            let startPercent = 0;
+            if (totalMonths > 60) {
+                startPercent = ((totalMonths - 60) / totalMonths) * 100;
+            }
+
+            const option = {
+                title: {
+                    text: 'Production by Region / Type',
+                    left: 'center',
+                    top: '10px',
+                    textStyle: { fontSize: 14, color: '#666' }
+                },
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: { type: 'cross' }
+                },
+                // --- CUSTOM RIGHT-SIDE BOX LEGEND ---
+                legend: {
+                    data: Object.values(labelMapping),
+                    type: 'scroll',            // Keeps long menu list scrollable vertically
+                    orient: 'vertical',        // Formats links in a vertical stack
+                    right: '1%',               // Pins the layout cleanly to the right edge
+                    top: '80px',               // Drops it below the title block
+                    bottom: '80px',            // Prevents it from clipping into the bottom slider bar
+                    padding: 15,               // Inside padding layout cushion
+                    backgroundColor: '#fff',   // Clean solid white card backing
+                    borderColor: '#ccc',       // Light grey border line
+                    borderWidth: 1,            // Renders the enclosing box line
+                    borderRadius: 5,           // Smooths out the box container corners
+                    itemGap: 12,               // Vertical gap spacing between individual keys
+                    textStyle: { fontSize: 11 },
+                    // Set default startup visibility conditions
+                    selected: {
+                        "Canada Total Oil Production": false // Automatically hides this track on startup
+                    }
+                },
+                grid: {
+                    top: '80px', 
+                    left: '4%',
+                    right: '26%', // Shifts chart grid to the left to reserve 26% of space for the right legend box
+                    bottom: '80px',
+                    containLabel: true
+                },
+                toolbox: {
+                    feature: {
+                        dataZoom: { yAxisIndex: 'none' },
+                        restore: {},
+                        saveAsImage: {}
+                    },
+                    right: '27%' // Moves the menu utilities safely out of the way of the legend box
+                },
+                dataZoom: [
+                    {
+                        type: 'slider',       
+                        show: true,
+                        xAxisIndex: 0,        
+                        start: startPercent,  
+                        end: 100,             
+                        bottom: '15px',
+                        right: '26%', // Matches the chart width grid boundary layout area cleanly
+                        handleSize: '100%'    
+                    },
+                    {
+                        type: 'inside',       
+                        xAxisIndex: 0,        
+                        start: startPercent,  
+                        end: 100
+                    }
+                ],
+                xAxis: {
+                    type: 'category',
+                    boundaryGap: false,
+                    data: xDates,
+                    axisLabel: {
+                        formatter: function (value) {
+                            return value ? value.substring(0, 7) : '';
+                        }
+                    }
+                },
+                yAxis: {
+                    type: 'value',
+                    name: 'Barrels',
+                    axisLabel: {
+                        formatter: function (value) {
+                            return value.toLocaleString();
+                        }
+                    }
+                },
+                series: seriesData
+            };
+
+            myChart.setOption(option);
+
+            // --- CUSTOM DOUBLE-CLICK ISOLATION ENGINE ---
+            myChart.on('legendselectchanged', function (params) {
+                const currentTime = new Date().getTime();
+                const timeDiff = currentTime - lastClickTime;
+                const clickedLegendName = params.name;
+
+                if (timeDiff < 350 && clickedLegendName === lastClickedName) {
+                    const totalSelected = Object.values(params.selected).filter(val => val).length;
+
+                    if (totalSelected === 1 && params.selected[clickedLegendName] === true) {
+                        myChart.dispatchAction({
+                            type: 'legendAllSelect' 
+                        });
+                    } else {
+                        myChart.dispatchAction({
+                            type: 'legendAllSelect' 
+                        });
+
+                        for (let name in params.selected) {
+                            if (name !== clickedLegendName) {
+                                myChart.dispatchAction({
+                                    type: 'legendUnSelect',
+                                    name: name
+                                });
+                            }
+                        }
+                    }
+                }
+
+                lastClickTime = currentTime;
+                lastClickedName = clickedLegendName;
+            });
+
+            window.addEventListener('resize', myChart.resize);
+        })
+        .catch(error => {
+            console.error("Error loading or parsing data.json file:", error);
+            chartDom.innerHTML = `<p style="color:red; text-align:center; padding-top:200px;">
+                Failed to render visualization. Error: ${error.message}<br>
+                Make sure 'data.json' is in the exact same directory and hosted over a local server environment.
+            </p>`;
+        });
+
+   </script>
+
+</body>
+</html>
+
